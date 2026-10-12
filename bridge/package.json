@@ -1,0 +1,17 @@
+{
+  "name": "aerodrift-serial-firebase-bridge",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Local USB serial bridge from an AERODRIFT ESP32 receiver to Firebase Realtime Database",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "engines": { "node": ">=20" },
+  "dependencies": {
+    "@serialport/parser-readline": "^12.0.0",
+    "dotenv": "^16.4.7",
+    "firebase-admin": "^13.0.0",
+    "serialport": "^12.0.0"
+  }
+}
