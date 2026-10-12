@@ -1,0 +1,11 @@
+.vercel/
+node_modules/
+.env
+.env.*
+!.env.example
+bridge/node_modules/
+bridge/.env
+bridge/service-account*.json
+bridge/*service-account*.json
+esp32/secrets.h
+.DS_Store

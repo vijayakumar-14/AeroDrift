@@ -1,0 +1,19 @@
+{
+  "rules": {
+    "telemetry": {
+      ".read": "auth != null",
+      ".write": false,
+      "history": {
+        ".indexOn": ["receivedAt"]
+      }
+    },
+    "system": {
+      ".read": "auth != null",
+      ".write": false
+    },
+    "prediction": {
+      ".read": "auth != null",
+      ".write": false
+    }
+  }
+}

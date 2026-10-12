@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#070b19" />
+  <meta name="description" content="AERODRIFT — live stratospheric balloon telemetry and recovery awareness dashboard." />
+  <title>AERODRIFT | Flight Operations</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="starfield" aria-hidden="true"></div>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a class="brand" href="#top" aria-label="AERODRIFT home">
+        <span class="brand-mark"><span class="orbit orbit-a"></span><span class="orbit orbit-b"></span><span class="brand-core">A</span></span>
+        <span class="brand-copy"><strong>AERO<span>DRIFT</span></strong><small>STRATOSPHERIC MISSION CONTROL</small></span>
+      </a>
+      <div class="side-section-label">MISSION SYSTEMS</div>
+      <nav class="side-nav" aria-label="Main navigation">
+        <a class="nav-item active" href="#overview"><span class="nav-icon">◈</span> Overview <span class="nav-dot"></span></a>
+        <a class="nav-item" href="#tracking"><span class="nav-icon">⌖</span> Flight tracking</a>
+        <a class="nav-item" href="#telemetry"><span class="nav-icon">⌁</span> Telemetry stream</a>
+        <a class="nav-item" href="#prediction"><span class="nav-icon">◎</span> Landing outlook <span class="nav-tag">BETA</span></a>
+      </nav>
+      <div class="sidebar-bottom">
+        <div class="mission-card">
+          <div class="mission-card-top"><span class="tiny-orb"></span><span>MISSION PROFILE</span></div>
+          <strong>TRINITY / SDHACKS'26</strong>
+          <p>Balloon drift and landing-zone uncertainty research.</p>
+          <div class="mission-line"><span>TELEMETRY</span><span id="sidebar-telemetry-state">STANDBY</span></div>
+        </div>
+        <div class="side-footer"><span class="status-pip"></span> AERODRIFT GROUND STATION <span class="version">v1.0</span></div>
+      </div>
+    </aside>
+
+    <main class="main-content" id="top">
+      <header class="topbar">
+        <div class="breadcrumb"><span>MISSION CONTROL</span><span class="crumb-slash">/</span><strong>OVERVIEW</strong></div>
+        <div class="top-actions">
+          <div class="utc-clock"><span class="clock-pip"></span><span id="utc-clock">--:--:-- UTC</span></div>
+          <button class="icon-button" id="demo-button" type="button" title="Show clearly labelled local sample data">▷ <span>SIM PREVIEW</span></button>
+          <button class="icon-button hidden" id="signout-button" type="button" title="Sign out">↗ <span>SIGN OUT</span></button>
+        </div>
+      </header>
+
+      <section class="login-panel" id="login-panel">
+        <div class="login-art" aria-hidden="true"><div class="planet planet-large"></div><div class="planet-ring"></div><div class="login-star s1"></div><div class="login-star s2"></div><div class="login-star s3"></div><div class="login-trajectory"></div></div>
+        <div class="login-copy"><div class="eyebrow"><span class="live-square"></span> SECURE GROUND STATION ACCESS</div><h1>Every signal<br />tells a <em>story.</em></h1><p>Connect to the AERODRIFT mission console to monitor balloon telemetry, review its flight path, and inspect recovery-planning inputs.</p>
+          <form id="login-form" class="login-form">
+            <label for="email">MISSION EMAIL</label><input id="email" type="email" autocomplete="username" placeholder="operator@team.org" required />
+            <label for="password">PASSWORD</label><input id="password" type="password" autocomplete="current-password" placeholder="Enter your password" required />
+            <button class="primary-button" type="submit"><span>AUTHENTICATE OPERATOR</span><span>↗</span></button>
+            <p id="login-error" class="error-message" role="status"></p>
+          </form>
+          <div class="login-footnote"><span>◈</span> Firebase Authentication · Read-only dashboard access</div>
+        </div>
+      </section>
+
+      <div id="dashboard" class="hidden">
+        <section class="hero" id="overview">
+          <div class="hero-copy"><div class="eyebrow"><span class="live-square"></span> SPACE TECHNOLOGY <span class="eyebrow-divider">/</span> FLIGHT TELEMETRY</div>
+            <h1>Mission <em>overview</em></h1>
+            <p>Track the signal. Understand the drift. Prepare for recovery.</p>
+          </div>
+          <div class="mission-state"><div class="state-ring"><div class="state-ring-inner"><span id="state-glyph">◌</span></div></div><div><div class="state-label">FLIGHT LINK</div><strong id="flight-state">AWAITING DATA</strong><small id="flight-state-sub">No recent packet received</small></div></div>
+        </section>
+
+        <section class="stat-grid" aria-label="Latest telemetry">
+          <article class="stat-card stat-altitude"><div class="stat-head"><span class="stat-icon">↟</span><span class="stat-label">GPS ALTITUDE</span><span class="stat-live" id="altitude-status">NO FIX</span></div><div class="stat-value"><span id="altitude-value">--</span><small>m</small></div><div class="stat-foot"><span>Above mean sea level</span><span class="stat-mini">ALT</span></div><div class="card-sparkline spark-altitude"></div></article>
+          <article class="stat-card"><div class="stat-head"><span class="stat-icon">⌖</span><span class="stat-label">GPS POSITION</span><span class="stat-live" id="gps-status">WAITING</span></div><div class="coordinate-value" id="position-value">--.------, --.------</div><div class="stat-foot"><span>Latitude / longitude</span><span class="stat-mini">GPS</span></div><div class="card-sparkline spark-position"></div></article>
+          <article class="stat-card"><div class="stat-head"><span class="stat-icon">◉</span><span class="stat-label">PRESSURE</span><span class="stat-live">BMP280</span></div><div class="stat-value"><span id="pressure-value">--</span><small>hPa</small></div><div class="stat-foot"><span>Ambient air pressure</span><span class="stat-mini">BARO</span></div><div class="card-sparkline spark-pressure"></div></article>
+          <article class="stat-card"><div class="stat-head"><span class="stat-icon">∿</span><span class="stat-label">TEMPERATURE</span><span class="stat-live">BMP280</span></div><div class="stat-value"><span id="temperature-value">--</span><small>°C</small></div><div class="stat-foot"><span>Sensor temperature</span><span class="stat-mini">THERM</span></div><div class="card-sparkline spark-temperature"></div></article>
+        </section>
+
+        <section class="content-grid">
+          <article class="panel map-panel" id="tracking">
+            <div class="panel-heading"><div><div class="panel-kicker">GROUND TRACK</div><h2>Live flight path</h2></div><div class="panel-heading-right"><span class="map-legend"><i class="legend-dot"></i> LIVE GPS</span><button class="subtle-button" id="recenter-map" type="button">◎ RECENTER</button></div></div>
+            <div class="map-wrap"><div id="flight-map" aria-label="Map showing the most recent GPS position and track"></div><div class="map-overlay map-overlay-top"><span class="overlay-label">TRACK SOURCE</span><strong id="map-source">GPS TELEMETRY</strong></div><div class="map-overlay map-overlay-bottom"><span class="map-coord-label">LATEST COORDINATE</span><strong id="map-coordinate">Awaiting GPS fix</strong></div><div id="map-no-fix" class="map-empty"><span class="map-empty-icon">⌖</span><strong>Waiting for a GPS fix</strong><small>Position and track appear here when valid coordinates arrive.</small></div></div>
+            <div class="map-footer"><span><i class="legend-line"></i> Received track</span><span><i class="legend-ring"></i> Latest position</span><span id="map-points-count">0 TRACK POINTS</span></div>
+          </article>
+          <article class="panel altitude-panel" id="telemetry">
+            <div class="panel-heading"><div><div class="panel-kicker">ALTITUDE PROFILE</div><h2>Flight telemetry</h2></div><span class="chart-unit">METRES</span></div>
+            <div class="chart-summary"><div><span class="chart-summary-label">LATEST GPS ALT.</span><strong id="chart-latest-altitude">-- <small>m</small></strong></div><div><span class="chart-summary-label">DATA POINTS</span><strong id="chart-point-count">0</strong></div></div>
+            <div class="chart-wrap"><canvas id="altitude-chart" aria-label="Altitude over recent telemetry samples"></canvas><div id="chart-empty" class="chart-empty">Awaiting telemetry samples…</div></div>
+            <div class="chart-footer"><span><i class="legend-line"></i> GPS altitude</span><span id="last-update-label">LAST UPDATE —</span></div>
+          </article>
+        </section>
+
+        <section class="content-grid lower-grid">
+          <article class="panel prediction-panel" id="prediction">
+            <div class="panel-heading"><div><div class="panel-kicker">RECOVERY PLANNING</div><h2>Landing-zone outlook</h2></div><span class="beta-tag">PREDICTION FEED</span></div>
+            <div class="prediction-body"><div class="prediction-graphic"><div class="target-ring ring-one"></div><div class="target-ring ring-two"></div><div class="target-ring ring-three"></div><div class="target-cross"></div><div class="target-dot"></div></div><div class="prediction-copy"><div class="prediction-state" id="prediction-state">NO MODEL DATA</div><h3 id="prediction-title">Prediction feed not connected</h3><p id="prediction-description">This panel will display a landing estimate and uncertainty radius only when a validated prediction service writes data to Firebase.</p><div class="prediction-values"><div><span>EST. LATITUDE</span><strong id="prediction-lat">--</strong></div><div><span>EST. LONGITUDE</span><strong id="prediction-lon">--</strong></div><div><span>UNCERTAINTY RADIUS</span><strong id="prediction-radius">--</strong></div></div></div></div>
+            <div class="prediction-note"><span>ⓘ</span> Prediction is advisory, not a flight-safety guarantee. Validate against weather data and recorded flights.</div>
+          </article>
+          <article class="panel systems-panel">
+            <div class="panel-heading"><div><div class="panel-kicker">GROUND STATION</div><h2>Signal & systems</h2></div><span class="system-shield">◈</span></div>
+            <div class="system-row"><div class="system-symbol">⌁</div><div class="system-main"><strong>ESP-NOW LINK</strong><small>Airborne transmitter → ground receiver</small></div><span id="espnow-status" class="system-status status-wait">WAITING</span></div>
+            <div class="system-row"><div class="system-symbol">⇄</div><div class="system-main"><strong>USB SERIAL BRIDGE</strong><small id="bridge-detail">Laptop bridge status unavailable</small></div><span id="bridge-status" class="system-status status-wait">WAITING</span></div>
+            <div class="system-row"><div class="system-symbol">◉</div><div class="system-main"><strong>FIREBASE REALTIME DB</strong><small>Live telemetry subscription</small></div><span id="firebase-status" class="system-status status-good">CONNECTED</span></div>
+            <div class="system-divider"></div>
+            <div class="packet-metrics"><div><span>PACKETS RECEIVED</span><strong id="packets-received">0</strong></div><div><span>EST. PACKET LOSS</span><strong id="packet-loss">--</strong></div><div><span>LAST PACKET</span><strong id="packet-age">--</strong></div></div>
+          </article>
+        </section>
+        <footer class="main-footer"><div><span class="footer-mark">A</span><span><strong>AERODRIFT</strong><small>TRACKING & RECOVERY RESEARCH</small></span></div><p>Built for the TRINITY team · SEDHACKS'26 · SPACE TECHNOLOGY</p><span class="footer-build">GROUND CONSOLE / 01</span></footer>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
